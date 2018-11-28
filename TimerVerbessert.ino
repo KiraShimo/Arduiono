@@ -5,7 +5,8 @@ LiquidCrystal_I2C lcd( 0x27, 16, 2);
 int MILLIS;
 int SECONDS;
 int MINUTES;
-int MENUE; 
+int MENUE;
+int ZAEHLEN; 
 
 void setup()
   { 
@@ -16,6 +17,9 @@ void setup()
     OCR1A = 625;
     TCCR1B |= (1<<CS12);
     TIMSK1 |= (1<<OCIE1A);
+    
+    interrupts();
+    
     //MENUE AUFBAUEN
     lcd.init();
     lcd.backlight();
@@ -24,12 +28,12 @@ void setup()
     lcd.print("(1) START/RESET");
     lcd.setCursor(0,1);
     lcd.print("(2) STOPP");
-    
-    
+    lcd.setCursor(0,0);
     
     pinMode(2, INPUT); //Starttaste
     pinMode(3, INPUT); //Stopptaste
-    interrupts();
+    pinMode(4, INPUT); //Zeitnehmen (und spiechern)
+    pinMode(5, INPUT); //Stopp
   }
 
 ISR(TIMER1_COMPA_vect){
@@ -65,7 +69,7 @@ ISR(TIMER1_COMPA_vect){
   
 void ZEITZEIGEN()
   {
-    
+    lcd.setCursor(0,0);
     lcd.print(MINUTES);
     lcd.print(".");
     lcd.print(SECONDS);
@@ -78,15 +82,25 @@ void loop()
   {
     if (digitalRead(2) == HIGH)
       {
-        
+      ZAEHLEN = 1;
+      MILLIS = SECONDS = MINUTES = 0;
       lcd.setCursor(0,0);
       lcd.print("GESTARTET ...");
-      lcd.setCursor(0,1);
+      
       while(1){
         ZEITZEIGEN();
         delay(100);
         lcd.setCursor(0,0);
-        if(digitalRead(2) == LOW)break;
+        if(digitalRead(4)== HIGH){
+          //SAVE TIME
+        }
+        if(digitalRead(5)== HIGH){
+          ZAEHLEN = 0;
+        }
+        if(ZAEHLEN == 0){
+          ZAEHLEN = 1;
+          break;
+        }
       }
       }
     if (digitalRead(3) == HIGH)
@@ -103,6 +117,7 @@ void loop()
            lcd.print("(1) START/RESET");
            lcd.setCursor(0,1);
            lcd.print("(2) STOPP");
+           lcd.setCursor(0,0);
            break;
         }
     
