@@ -1,10 +1,11 @@
 #include <LiquidCrystal_I2C.h>
 
 LiquidCrystal_I2C lcd( 0x27, 16, 2);
-
-unsigned long finished, elapsed;
-int Zeit;
-int Trick;
+//VARIABLEN
+int MILLIS;
+int SECONDS;
+int MINUTES;
+int MENUE; 
 
 void setup()
   { 
@@ -15,7 +16,7 @@ void setup()
     OCR1A = 625;
     TCCR1B |= (1<<CS12);
     TIMSK1 |= (1<<OCIE1A);
-    
+    //MENUE AUFBAUEN
     lcd.init();
     lcd.backlight();
     lcd.clear();
@@ -24,8 +25,7 @@ void setup()
     lcd.setCursor(0,1);
     lcd.print("(2) STOPP");
     
-    Trick = 0;
-    Zeit = 0;
+    
     
     pinMode(2, INPUT); //Starttaste
     pinMode(3, INPUT); //Stopptaste
@@ -34,22 +34,44 @@ void setup()
 
 ISR(TIMER1_COMPA_vect){
   TCNT1 = 0;
-  Zeit ++;
+
+   if(MINUTES <= 59)
+  {
+    if(SECONDS == 59)
+      MINUTES += 1;
+  }
+  else{
+      MINUTES = 0;
+    }  
+
+   if(SECONDS <= 59)
+  {
+    if(MILLIS == 59)
+      SECONDS += 1;
+  }
+  else{
+      SECONDS = 0;
+    }
+  
+  if(MILLIS <= 59)
+  {
+    MILLIS += 1;
+  }
+  else{
+      MILLIS = 0;
+    }
+    
   }
   
-void displayResult()
+void ZEITZEIGEN()
   {
-    int s, ms;
-    unsigned long over;
-    elapsed = finished - Zeit;
-    over = elapsed % 3600000;
-    over = over % 60000;
-    s = int(over / 1000);
-    ms = over % 1000;
-    lcd.print(s);
-    lcd.print("s ");
-    lcd.print(ms);
-    lcd.print("ms");
+    
+    lcd.print(MINUTES);
+    lcd.print(".");
+    lcd.print(SECONDS);
+    lcd.print(".");
+    lcd.print(MILLIS);
+    lcd.print(".");
 }
 
 void loop()
@@ -61,7 +83,7 @@ void loop()
       lcd.print("GESTARTET ...");
       lcd.setCursor(0,1);
       while(1){
-        displayResult();
+        ZEITZEIGEN();
         delay(100);
         lcd.setCursor(0,0);
         if(digitalRead(2) == LOW)break;
@@ -69,13 +91,13 @@ void loop()
       }
     if (digitalRead(3) == HIGH)
   {
-    Trick = 1;
+    MENUE = 1;
     }
     
-    while(Trick == 1) {
+    while(MENUE == 1) {
       if (digitalRead(3) == LOW){
-           displayResult();
-           Trick = 0;
+           ZEITZEIGEN();
+           MENUE = 0;
            delay(4000);
            lcd.setCursor(0,0);
            lcd.print("(1) START/RESET");
@@ -83,13 +105,7 @@ void loop()
            lcd.print("(2) STOPP");
            break;
         }
-    finished = millis();
-    delay(200);
-    displayResult();
-    delay(200);
-     
-    lcd.clear();
-    lcd.setCursor(0,0);   
+    
   }
   
 }
